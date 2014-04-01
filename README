@@ -1,0 +1,46 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=4906
+
+Peggi is a parsing framework. On it's own, it's of not much use, but it can serve you when you write a Vim script that has to struggle with data too complicated to parse with regular expressions alone.
+
+It's home is here: https://github.com/EinfachToll/peggi/
+
+
+Basic Usage
+---------------------
+
+1. In your Vim script, first specify the formal grammar of your data as Parsing Expression Grammar (PEG)
+2. Then start Peggi: `let result = peggi#peggi#parse(grammar, data, start-nonterminal)`
+
+See the Readme for details.
+
+
+
+Example
+---------------
+
+As an example, let's look at a script that uses Peggi for processing arithmetic expressions:
+
+let s:grammar = '
+            \ Expression = ( Term , /\s*[+-]/.strip() , Expression ).g:compute()  |  Term
+            \ Term = ( Factor , /\s*[*\/]/.strip() , Term ).g:compute()  |  Factor
+            \ Factor = ( /\s*(/ , Expression , /\s*)/ ).take("1")  |  /\s*[-0-9.]\+/.str2float()
+            \ '
+
+function! g:compute(list)
+    if a:list[1] == '*'
+        return a:list[0] * a:list[2]
+    elseif a:list[1] == '/'
+        return a:list[0] / a:list[2]
+    elseif a:list[1] == '+'
+        return a:list[0] + a:list[2]
+    elseif a:list[1] == '-'
+        return a:list[0] - a:list[2]
+    endif
+endfunction
+
+let s:example = '-10 * (2* 2)/(0.6 +2)'
+
+echo peggi#peggi#parse(s:grammar, s:example, 'Expression')
+
+
+The output is -15.384615
